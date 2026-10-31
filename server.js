@@ -71,16 +71,45 @@ async function initializeDatabase() {
     `CREATE TABLE IF NOT EXISTS shops (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, user_id INT UNSIGNED NOT NULL UNIQUE, category_id INT UNSIGNED NULL, name VARCHAR(150) NOT NULL, description TEXT NULL, public_phone VARCHAR(30) NULL, public_contact VARCHAR(255) NULL, is_published TINYINT(1) NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT fk_shops_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, CONSTRAINT fk_shops_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS markets (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, description TEXT NULL, address VARCHAR(255) NULL, timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Bangkok', map_image_path VARCHAR(255) NULL, public_code VARCHAR(64) NOT NULL UNIQUE, is_active TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS booths (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, market_id INT UNSIGNED NOT NULL, booth_code VARCHAR(32) NOT NULL, description VARCHAR(255) NULL, map_x DECIMAL(8,5) NULL, map_y DECIMAL(8,5) NULL, map_width DECIMAL(8,5) NULL, map_height DECIMAL(8,5) NULL, base_status ENUM('available','unavailable') NOT NULL DEFAULT 'available', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY uq_booth_code (market_id, booth_code), CONSTRAINT fk_booth_market FOREIGN KEY (market_id) REFERENCES markets(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+    `CREATE TABLE IF NOT EXISTS market_facilities (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, market_id INT UNSIGNED NOT NULL, facility_type ENUM('parking_car','parking_motorcycle','seating') NOT NULL, name VARCHAR(120) NOT NULL, description VARCHAR(255) NULL, location_label VARCHAR(100) NULL, capacity SMALLINT UNSIGNED NOT NULL DEFAULT 0, occupied_count SMALLINT UNSIGNED NOT NULL DEFAULT 0, map_x DECIMAL(8,5) NULL, map_y DECIMAL(8,5) NULL, status ENUM('open','closed') NOT NULL DEFAULT 'open', updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, INDEX idx_facility_market (market_id, facility_type), CONSTRAINT fk_facility_market FOREIGN KEY (market_id) REFERENCES markets(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+    `CREATE TABLE IF NOT EXISTS market_food_recommendations (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, market_id INT UNSIGNED NOT NULL, booth_id INT UNSIGNED NOT NULL, name VARCHAR(120) NOT NULL, cuisine VARCHAR(60) NOT NULL, description VARCHAR(255) NOT NULL, image_path VARCHAR(255) NOT NULL, price_label VARCHAR(80) NULL, is_demo TINYINT(1) NOT NULL DEFAULT 0, is_active TINYINT(1) NOT NULL DEFAULT 1, featured_order SMALLINT UNSIGNED NOT NULL DEFAULT 0, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE KEY uq_recommendation_market_name (market_id, name), INDEX idx_recommendation_market_active (market_id, is_active, featured_order), CONSTRAINT fk_recommendation_market FOREIGN KEY (market_id) REFERENCES markets(id) ON DELETE CASCADE, CONSTRAINT fk_recommendation_booth FOREIGN KEY (booth_id) REFERENCES booths(id) ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
     `CREATE TABLE IF NOT EXISTS bookings (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, shop_id INT UNSIGNED NOT NULL, market_id INT UNSIGNED NOT NULL, booth_id INT UNSIGNED NOT NULL, status ENUM('confirmed','cancelled','completed') NOT NULL DEFAULT 'confirmed', booking_date DATE NOT NULL, shop_name_snapshot VARCHAR(150) NOT NULL, category_name_snapshot VARCHAR(80) NULL, description_snapshot TEXT NULL, contact_snapshot VARCHAR(255) NULL, shop_note VARCHAR(500) NULL, review_note VARCHAR(500) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, INDEX idx_booking_shop_created (shop_id, created_at), INDEX idx_booking_booth_date (booth_id, booking_date, status), INDEX idx_booking_market_date (market_id, booking_date, status), CONSTRAINT fk_booking_shop FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT, CONSTRAINT fk_booking_market FOREIGN KEY (market_id) REFERENCES markets(id) ON DELETE RESTRICT, CONSTRAINT fk_booking_booth FOREIGN KEY (booth_id) REFERENCES booths(id) ON DELETE RESTRICT) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
   ];
   for (const sql of statements) await pool.query(sql);
   await pool.query("INSERT IGNORE INTO categories (name) VALUES (?), (?), (?), (?), (?), (?)", ["อาหาร", "เครื่องดื่ม", "เสื้อผ้า", "ของใช้", "งานฝีมือ", "อื่น ๆ"]);
   await pool.query("INSERT IGNORE INTO markets (name, description, address, timezone, public_code, is_active) VALUES (?, ?, ?, 'Asia/Bangkok', ?, 1)", ["ตลาดตัวอย่าง ตากหลาดนัด", "ข้อมูลตัวอย่างสำหรับทดลองระบบ สามารถแทนที่ด้วยข้อมูลตลาดจริง", "ข้อมูลที่อยู่ตัวอย่าง", "demo-takhladnat"]);
   const demoMarket = await pool.query("SELECT id FROM markets WHERE public_code = ?", ["demo-takhladnat"]);
-  for (let row = 0; row < 3; row += 1) {
-    for (let column = 0; column < 5; column += 1) {
+  for (let row = 0; row < 5; row += 1) {
+    for (let column = 0; column < 10; column += 1) {
       const code = `${String.fromCharCode(65 + row)}${String(column + 1).padStart(2, "0")}`;
-      await pool.query("INSERT IGNORE INTO booths (market_id, booth_code, description, map_x, map_y, map_width, map_height) VALUES (?, ?, ?, ?, ?, 12, 12)", [demoMarket[0].id, code, `โซน ${String.fromCharCode(65 + row)}`, 8 + column * 18, 12 + row * 25]);
+      const mapX = 4 + column * 9;
+      const mapY = 8 + row * 13;
+      await pool.query("INSERT IGNORE INTO booths (market_id, booth_code, description, map_x, map_y, map_width, map_height) VALUES (?, ?, ?, ?, ?, 7, 9)", [demoMarket[0].id, code, `โซน ${String.fromCharCode(65 + row)}`, mapX, mapY]);
+      await pool.query("UPDATE booths SET description=?, map_x=?, map_y=?, map_width=7, map_height=9 WHERE market_id=? AND booth_code=?", [`โซน ${String.fromCharCode(65 + row)}`, mapX, mapY, demoMarket[0].id, code]);
+    }
+  }
+  const facilities = [
+    ["parking_car", "ลานจอดรถยนต์", "จอดรถยนต์และรถกระบะ", "ประตูเหนือ", 48, 17, 5, 82],
+    ["parking_motorcycle", "ลานจอดมอเตอร์ไซค์", "จอดมอเตอร์ไซค์และจักรยาน", "ประตูตะวันตก", 80, 31, 83, 82],
+    ["seating", "ศูนย์อาหารกลางตลาด", "โต๊ะนั่งทานอาหาร มีหลังคา", "โซน F · กลางตลาด", 64, 28, 46, 80],
+    ["seating", "สวนพักใจ", "ม้านั่งใต้ร่มไม้", "โซน G · สวนด้านใน", 24, 5, 75, 17]
+  ];
+  for (const facility of facilities) {
+    await pool.query("INSERT INTO market_facilities (market_id, facility_type, name, description, location_label, capacity, occupied_count, map_x, map_y, status) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open' WHERE NOT EXISTS (SELECT 1 FROM market_facilities WHERE market_id=? AND name=?)", [demoMarket[0].id, ...facility, demoMarket[0].id, facility[1]]);
+  }
+  const recommendations = [
+    ["A02", "เส้นสดบ้านอิ่ม", "ก๋วยเตี๋ยว · อาหารจานเดียว", "ก๋วยเตี๋ยวปรุงสด น้ำซุปหอม เลือกเครื่องได้ตามชอบ", "/images/food-noodles.jpg", "เริ่มต้นประมาณ 50 บาท", 1],
+    ["B03", "ข้าวจานอิ่ม", "ข้าวหน้า · อาหารจานเดียว", "เมนูข้าวหน้ากับผักและเครื่องเคียง ทำใหม่พร้อมเสิร์ฟ", "/images/food-rice.jpg", "เริ่มต้นประมาณ 45 บาท", 2],
+    ["C05", "เตาถ่านบ้านสวน", "ปิ้งย่าง · ของทานเล่น", "ของย่างหอมเตาถ่าน พร้อมน้ำจิ้มรสจัดจ้าน", "/images/food-grill.jpg", "เริ่มต้นประมาณ 20 บาท", 3],
+    ["D07", "ขนมหวานละมุน", "ขนมหวาน · ของหวาน", "ขนมหวานและของว่าง ทำเป็นรอบเล็ก ๆ สดใหม่", "/images/food-dessert.jpg", "เริ่มต้นประมาณ 35 บาท", 4]
+  ];
+  await pool.query("UPDATE market_food_recommendations SET is_active=0 WHERE market_id=? AND name=? AND is_demo=1", [demoMarket[0].id, "ข้าวแกงคุณละไม"]);
+  for (const [boothCode, name, cuisine, description, imagePath, priceLabel, order] of recommendations) {
+    const booth = await pool.query("SELECT id FROM booths WHERE market_id=? AND booth_code=?", [demoMarket[0].id, boothCode]);
+    if (booth.length) {
+      await pool.query(`INSERT INTO market_food_recommendations (market_id, booth_id, name, cuisine, description, image_path, price_label, is_demo, featured_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
+        ON DUPLICATE KEY UPDATE booth_id=VALUES(booth_id), cuisine=VALUES(cuisine), description=VALUES(description), image_path=VALUES(image_path), price_label=VALUES(price_label), is_demo=1, is_active=1, featured_order=VALUES(featured_order)`, [demoMarket[0].id, booth[0].id, name, cuisine, description, imagePath, priceLabel, order]);
     }
   }
 }
@@ -116,7 +145,30 @@ app.get("/api/v1/public/markets/:code/map", asyncRoute(async (req, res) => {
     FROM booths b LEFT JOIN bookings bk ON bk.booth_id = b.id AND bk.booking_date = ? AND bk.status = 'confirmed'
     LEFT JOIN shops s ON s.id = bk.shop_id LEFT JOIN categories c ON c.id = s.category_id
     WHERE b.market_id = ? ORDER BY b.booth_code`, [date, market.id]);
-  res.json({ data: { market, booking_date: date, booths } });
+  const facilities = await pool.query("SELECT id, facility_type, name, description, location_label, capacity, occupied_count, GREATEST(capacity - occupied_count, 0) AS available_count, map_x, map_y, status FROM market_facilities WHERE market_id = ? ORDER BY facility_type, name", [market.id]);
+  res.json({ data: { market, booking_date: date, booths, facilities } });
+}));
+app.get("/api/v1/public/markets/:code/facilities", asyncRoute(async (req, res) => {
+  const markets = await pool.query("SELECT id FROM markets WHERE public_code = ? AND is_active = 1", [req.params.code]);
+  if (!markets.length) return fail(res, 404, "MARKET_NOT_FOUND", "ไม่พบตลาดนี้");
+  const facilities = await pool.query("SELECT id, facility_type, name, description, location_label, capacity, occupied_count, GREATEST(capacity - occupied_count, 0) AS available_count, map_x, map_y, status FROM market_facilities WHERE market_id = ? ORDER BY facility_type, name", [markets[0].id]);
+  res.json({ data: facilities });
+}));
+app.get("/api/v1/public/markets/:code/recommendations", asyncRoute(async (req, res) => {
+  const markets = await pool.query("SELECT id, timezone FROM markets WHERE public_code = ? AND is_active = 1", [req.params.code]);
+  if (!markets.length) return fail(res, 404, "MARKET_NOT_FOUND", "ไม่พบตลาดนี้");
+  const date = req.query.booking_date || new Intl.DateTimeFormat("en-CA", { timeZone: markets[0].timezone }).format(new Date());
+  if (!validDate(date)) return fail(res, 422, "INVALID_BOOKING_DATE", "วันที่ไม่ถูกต้อง");
+  const recommendations = await pool.query(`SELECT r.id, r.name, r.cuisine, r.description, r.image_path, r.price_label, r.is_demo,
+    b.id AS booth_id, b.booth_code, b.map_x, b.map_y,
+    CASE WHEN b.base_status='unavailable' THEN 'unavailable'
+         WHEN EXISTS (SELECT 1 FROM bookings bk WHERE bk.booth_id=b.id AND bk.booking_date=? AND bk.status='confirmed') THEN 'confirmed'
+         ELSE 'available' END AS booth_status
+    FROM market_food_recommendations r
+    JOIN booths b ON b.id=r.booth_id
+    WHERE r.market_id=? AND r.is_active=1
+    ORDER BY r.featured_order, r.name`, [date, markets[0].id]);
+  res.json({ data: recommendations });
 }));
 app.get("/api/v1/public/markets/:code/shops", asyncRoute(async (req, res) => {
   const markets = await pool.query("SELECT id, timezone FROM markets WHERE public_code = ? AND is_active = 1", [req.params.code]);

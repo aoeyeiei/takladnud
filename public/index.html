@@ -35,12 +35,29 @@
       </div>
     </section>
 
+    <section class="food-section" id="recommended-food">
+      <div class="wrap">
+        <div class="section-heading food-heading">
+          <div>
+            <p class="eyebrow">A LITTLE TASTE OF THE MARKET</p>
+            <h2>ร้านอร่อยที่อยากบอกต่อ</h2>
+            <p class="section-sub">เปิดดูเมนู แล้วแตะเพื่อหาตำแหน่งร้านบนแผนผัง</p>
+          </div>
+          <a class="text-button food-map-link" href="#markets">ดูแผนผังตลาด <span>→</span></a>
+        </div>
+        <div id="food-recommendations" class="food-grid" aria-live="polite">
+          <p class="muted">กำลังค้นหาร้านอร่อย...</p>
+        </div>
+        <p class="demo-note" id="food-demo-note">ร้านและราคาเป็นข้อมูลตัวอย่างสำหรับตลาดสาธิต · ภาพอาหารประกอบจาก Unsplash</p>
+      </div>
+    </section>
+
     <section class="market-section" id="markets">
       <div class="wrap">
         <div class="section-heading"><div><p class="eyebrow">YOUR NEIGHBORHOOD, ON THE MAP</p><h2>ตลาดนัดใกล้ใจ</h2><p class="section-sub">เลือกตลาด แล้วออกไปเจอร้านที่ใช่</p></div><div class="map-stamp">LOCAL<br><b>FIND</b><br>GOOD</div></div>
         <div class="market-layout">
           <aside class="market-sidebar"><label class="search-box"><span>⌕</span><input id="shop-search" type="search" placeholder="ค้นหาร้านหรือของอร่อย" aria-label="ค้นหาร้าน"></label><label class="select-wrap"><span>หมวดหมู่</span><select id="category-filter"><option value="">ทุกหมวดหมู่</option></select></label><div id="market-list" class="market-list"><p class="muted">กำลังโหลดตลาด...</p></div><div class="legend"><span><i class="legend-dot available"></i> ว่าง</span><span><i class="legend-dot booked"></i> มีร้านแล้ว</span></div></aside>
-          <div class="map-panel"><div class="map-topline"><div><span class="live-dot"></span><b id="market-title">เลือกตลาดเพื่อดูแผนผัง</b><small id="market-address">ข้อมูลผังร้านจะแสดงตรงนี้</small></div><label class="date-pick"><span>วันที่</span><input type="date" id="map-date"></label></div><div id="map-area" class="map-area"><div class="map-empty"><span class="empty-illustration">⌖</span><h3>ตลาดดี ๆ รอให้คุณค้นพบ</h3><p>เลือกตลาดจากรายการด้านซ้ายเพื่อดูแผนผังและร้านค้า</p></div></div><div id="shop-cards" class="shop-cards"></div></div>
+          <div class="map-panel"><div class="map-topline"><div><span class="live-dot"></span><b id="market-title">เลือกตลาดเพื่อดูแผนผัง</b><small id="market-address">ข้อมูลผังร้านจะแสดงตรงนี้</small></div><label class="date-pick"><span>วันที่</span><input type="date" id="map-date"></label></div><div id="map-area" class="map-area"><div class="map-empty"><span class="empty-illustration">⌖</span><h3>ตลาดดี ๆ รอให้คุณค้นพบ</h3><p>เลือกตลาดจากรายการด้านซ้ายเพื่อดูแผนผังและร้านค้า</p></div></div><div class="map-key"><span><i class="legend-dot available"></i> แผงว่าง</span><span><i class="legend-dot booked"></i> มีร้านแล้ว</span><span><b class="key-symbol parking">P</b> ที่จอดรถ</span><span><b class="key-symbol dining">⌂</b> ที่นั่งกิน</span></div><div id="facility-cards" class="facility-cards"></div><div id="shop-cards" class="shop-cards"></div></div>
         </div>
       </div>
     </section>
